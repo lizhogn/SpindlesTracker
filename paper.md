@@ -24,7 +24,7 @@ Our 3 contributions are as follows.
 ## Relate Works
 ### Multi-Object Tracking
 #### Objection Detection
-In tracking-by-detection framework, object detection is the basis of multi-object tracking. In converlutional neural network(CNN)  based deep learning network, object detection algorithms can be divided into two categories according to detection stages: one is the two-stage model represented by Faster R-CNN~\cite{ren2016faster}, another is the single-stage model represented by YOLO~\cite{redmon2016you}. In early, the speed of one-stage model is faster than that of two-stage model, but the accuracy of the two-stage model is better than that of the one-stage model. However, due to the faster iterations of the YOLO series, one-stage model is now outperforming the two-stage model in terms of both speed and accuracy. The YOLOX-SP in this paper is a modification based on the latest YOLO series model: YOLOX, which has state-of-the-art accuracy in one-stage model.
+In tracking-by-detection framework, object detection is the basis of multi-object tracking. In converlutional neural network(CNN)  based deep learning network, object detection algorithms can be divided into two categories according to detection stages: one is the two-stage model represented by Faster R-CNN~\cite{ren2016faster}, another is the one-stage model represented by YOLO~\cite{redmon2016you}. In early, the speed of one-stage model is faster than that of two-stage model, but the accuracy of the two-stage model is better than that of the one-stage model. However, due to the faster iterations of the YOLO series, one-stage model is now outperforming the two-stage model in terms of both speed and accuracy. The YOLOX-SP in this paper is a modification based on the latest YOLO series model: YOLOX, which has state-of-the-art accuracy in one-stage model.
 
 #### Data Association
 Data association is another core component of multi-object tracking, which first computes the similarity between tracklets and detection boxes and then matches them according to the similarity. In similarity metrics, location, motion and apperarance are useful cues for assocition. SORT combines location and motion cues, some recent methods design networks to learn object motions and achieve more robust results in cases of large camera motion or low frame rate. DeepSORT adopts a stand-alone Re-ID model to extract appearance features from the detection boxes. After similarity computation, matching strategy assigns identities to the objects. This can be done by Hungarian Algorithm or greedy assignment. SORT matches the detection boxes to the trackets by once matching. DeepSORT  proposes a cascaded matching strategy which first matches the detection boxes to the most recent tracklets and then to the lost ones. Due to the spindle simple motion and similiar appearance, SORT is fully competent.
@@ -70,22 +70,44 @@ where  $I_{interval}=I_{max} - I_{min}$ and  $t_1, t_2$ denote the positions of 
 ### Object Detection
 ![[YOLO-SP model.png]]
 
-YOLO-SP network architecture as shown in Fig 3，根据功能，According to the features, we can divide the YOLO-SP network into 2 parts: Spindle Detection and Heapmap Regression。
+YOLO-SP network architecture as shown in Fig 3. According to the features, we can divide the YOLO-SP network into 2 parts: Spindle Detection and Heapmap Regression。
 For spindle detection, we have completely inherited the structure of YOLOX. The backbone network is the same as YOLOv5 which adopts an advanced CSPNet backbone and an additional PAN head. There are two decoupled heads after the backbone network, one for regression and the other for classfication. An addtional IoU-aware branch is added to the regression head to predict the IoU between the predicted box and the ground truth box. The regression head directly predicts four values in each location in the feature map, i.e., two offsets in terms of the left-top corner of the grid, and the height and width of the predicted box. The regression head is supervised by GIoU loss and classification and IoU heads are supervised by the binary cross entropy loss.
 
-In heatmap regression, 我们对YOLOX的Backbone进行了拓展，在FPN部分，我们继续进行特征图的上采样与融合操作，最终得到一个与输入图像尺寸相等的特征图，我们用这张特征图进行spindle endpoint的heatmap regression，目标是真实端点形成的高斯模糊图像，损失函数选用的是最小均方误差MSE。
+In heatmap regression, we extended the backbone of YOLO-SP. 在FPN部分，我们继续进行特征图的上采样与融合操作，最终得到一个与输入图像尺寸相等的特征图，我们用这张特征图进行spindle endpoint的heatmap regression，目标是真实端点形成的高斯模糊图像，损失函数选用的是最小均方误差MSE。
 
 
 ### Skeleton Extracting
+After obtain the heapmap of the spindle endpoints, Non-maximum Suppression(NMS) is used to find the local maximum point, which is an important algorithm used in the post-processing of object detection to eliminate duplicate target. Firstly we need to filter out pixels in the heatmap whose value is lower than the predefined confident threshold. Then we assign a anchor box(with a radius of 3 pixels) to the remaining pixels, and among all target boxes with oberlap, only the one with the hightest probability is kept. Finally, the spindle endpoint can be taken out in the heatmap. Together with the bounding box obtained by the detection module, we can pair endpoints inside the same bounding box as the head and tail of spindle. 
 
+在提取spindle skeleton中，我们并没用采用分割+细化这种启发式的方法，主要有两个原因：1. 语义分割需要标注的数据集复杂度高于关键点和目标框；2. 分割+细化的操作非常容易导致骨架不连续和毛刺，不利于spindle长度的测量。因此，为了能够生成一条单像素的、连续的spindle 骨架，我们设计了一个“minimum path” 约束优化方程。
+
+Given a image $I(x, y)$ 和 spindle's pair points $p_0=(x_0, y_0) $ and $p_1=(x_1, y_1)$，we aim to find a continuous, single-pixel set of optimized path points $\{P={(x_k, y_k), k \in R}\}$. A key constraint is that the condition of 8-connectivity need to be satisfied between two adjacent points: $\max\{\left|x_k - x_{k+1}\right|, \left|y_k - y_{k+1}\right|\}=1$. Since the images we consider are discrete, there must exist an optimal path in theory.
+
+The cost $\xi(P)$ is a function on the set of path points $P$. We want the path to pass through the region of bright intensity while ensuring that it passes through the shortest path, the cost function to minimize as follows:
+$$
+\xi(P) = \sum_{k}\lambda (I_{max}-I(x_k, y_k))+ \\
+(1-\lambda)\Vert(x_k, y_k)-(x_{k-1}, y_{k-1}) \Vert_1
+$$
+where $\lambda$ is a user-controlled balancing factor that makes a trade-off between shorter paths and greater brightness (the default value is $\lambda = 0.25$). This optimization problem can be solved quickly by dynamic programming.
 
 ### Data Association
+For spindle time-lapse imaging association, we adopt SORT algorithm, which is only using a rudimentary combination of familiar techniques such as the Kalman Filter and Hungarian algorithm. Considering that the target state modelled in the original SORT does not apply well to the spindle whose morphology changes continuously over time during cell division, so we rebuild the target state as follows:
+$$
+x = [u, v, w, h, \dot u, \dot v, \dot w, \dot h]
+$$
+where $u$ and $v$ represent the horizontal and vertical pixel location of the center of the target, while w and h represent the width and height of the target's bounding box respectively. 假设我们已经知道了 1:t-1 帧所有的target state x, 那么根据卡尔曼滤波，线性动态系统的方程可以用以下方程进行描述：
+$$
+\hat x_k = F_k \hat x_{k-1}
+$$
+$$
+P_k  = F_k P_{k-1} F_k^T + Q_k
+$$
+其中状态转移矩阵F_k可以通过目标的线性运动模型得到，协方差矩阵P_k可以根据每个变量的不确定程度自行设计，Q_k是噪声扰动矩阵。
 
-
-
-
+通过式（2）和式（3）我们就可以获得目标在t帧的predicted state $\hat x$, and the detection state $\tilde x$ $[u, v, w, h]$ can be inference by the YOLO-SP model. In assigning detections to existing targets, each target's bounding box geometry is eestimated by predicting its new location in the t frame. The assignment cost matrix is then computed as the intersection-over-union(IOU) distance between each detection and all predicted bounding boxes from the existing targets. The assignment is solved optimally using the Hungarian algorithm. Additionally, a minimum IOU is imposed to reject assignments where the detection to target overlap is less than IOU_min. For creation and deletion of track identities, we are totally refer to the [sort paper]
 
 ## Experiment
+
 
 
 ## Result
