@@ -95,16 +95,16 @@ For spindle time-lapse imaging association, we adopt SORT algorithm, which is on
 $$
 x = [u, v, w, h, \dot u, \dot v, \dot w, \dot h]
 $$
-where $u$ and $v$ represent the horizontal and vertical pixel location of the center of the target, while w and h represent the width and height of the target's bounding box respectively. 假设我们已经知道了 1:t-1 帧所有的target state x, 那么根据卡尔曼滤波，线性动态系统的方程可以用以下方程进行描述：
+where $u$ and $v$ represent the horizontal and vertical pixel location of the center of the target, while w and h represent the width and height of the target's bounding box respectively. Suppose we know all the target states for the 0~t-1 frame, then the linear dynamic system can be represented as following:
 $$
 \hat x_k = F_k \hat x_{k-1}
 $$
 $$
 P_k  = F_k P_{k-1} F_k^T + Q_k
 $$
-其中状态转移矩阵F_k可以通过目标的线性运动模型得到，协方差矩阵P_k可以根据每个变量的不确定程度自行设计，Q_k是噪声扰动矩阵。
+where the state transfer matrix $F_k$ can be obtained from the linear motion model, the covariance matrix $P_k$ is designed according to the degree of uncertainty of each variable, while $Q_k$ is the noise preturbation matrix.
 
-通过式（2）和式（3）我们就可以获得目标在t帧的predicted state $\hat x$, and the detection state $\tilde x$ $[u, v, w, h]$ can be inference by the YOLO-SP model. In assigning detections to existing targets, each target's bounding box geometry is eestimated by predicting its new location in the t frame. The assignment cost matrix is then computed as the intersection-over-union(IOU) distance between each detection and all predicted bounding boxes from the existing targets. The assignment is solved optimally using the Hungarian algorithm. Additionally, a minimum IOU is imposed to reject assignments where the detection to target overlap is less than IOU_min. For creation and deletion of track identities, we are totally refer to the [sort paper]
+With the equation 2 and 3, we can get the predicted state $\hat x$, and the detection state $\tilde x$ $[u, v, w, h]$ can be inference by the YOLO-SP model. In assigning detections to existing targets, each target's bounding box geometry is eestimated by predicting its new location in the t frame. The assignment cost matrix is then computed as the intersection-over-union(IOU) distance between each detection and all predicted bounding boxes from the existing targets. The assignment is solved optimally using the Hungarian algorithm. Additionally, a minimum IOU is imposed to reject assignments where the detection to target overlap is less than IOU_min. For creation and deletion of track identities, we are totally refer to the [sort paper]
 
 ## Experiment
 
@@ -112,6 +112,13 @@ $$
 
 ## Result
 
+### Accuracy
+
+
+### Speed
+
+
+### Labeling cost
 
 
 ## Conclusion
