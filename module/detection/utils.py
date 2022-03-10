@@ -1,9 +1,18 @@
 import numpy as np
-from skimage.feature import peak_local_max
+from findmaxima2d import find_maxima, find_local_maxima 
 
-def convert_mask_to_points(mask):
-    points = peak_local_max(np.squeeze(mask), min_distance=5)
-    return points[:, ::-1]
+def convert_mask_to_points(mask, up_factor=None):
+    # filter out the low score pixel
+    mask[mask < 60] = 0
+    
+    # find the local maxium point
+    local_max = find_local_maxima(mask)
+    y, x, out = find_maxima(mask, local_max, 10)
+
+    points = np.stack([x, y], axis=1)
+    if up_factor is not None:
+        points = up_factor * points
+    return points
 
 def isInParRect(point, box):
     # expand the box
@@ -18,26 +27,44 @@ def isInParRect(point, box):
     else:
         return True
 
+def vis_box_points(bboxes, points):
+    import matplotlib.pyplot as plt
+    import cv2
+
+    bboxes = np.uint32(bboxes)
+    img = cv2.imread("/home/zhognli/SpindleTracker/img_raw.png")
+    for bx in bboxes[:, :-1]:
+        pt1, pt2 = bx[:2].tolist(), bx[2:].tolist()
+        cv2.rectangle(img, pt1, pt2, (0, 255, 0), 1)
+    plt.figure()
+    plt.imshow(img)
+    plt.plot(points[:, 0], points[:, 1], "ro", markersize=2)
+    plt.savefig("vis_box_points.png")
+    
 def match_points_to_bboxes(bboxes, points):
-    match_dict = {}
     matched_bboxes = []
     matched_points = []
-    for pt in points:
-        for idx, bx in enumerate(bboxes[:, :-1]):
+    # vis the points and bboxes for debug
+    # vis_box_points(bboxes, points)
+    for bx in bboxes[:, :-1]:
+        matched_bboxes.append(bx.tolist())
+        inside_points = []
+        for pt in points:
             if isInParRect(pt, bx):
-                if idx not in match_dict:
-                    match_dict[idx] = []
-                match_dict[idx].append(pt)
-    for idx in match_dict:
-        pts = match_dict[idx]
-        if len(pts) == 2:
-            matched_bboxes.append(bboxes[idx])
-            matched_points.append([*pts[0], *pts[1]])
+                inside_points.append(pt.tolist())
+        matched_points.append(inside_points)
+                
     return matched_bboxes, matched_points
                 
 if __name__ == "__main__":
     # load image
     import cv2
+    import matplotlib.pyplot as plt
+
     img = cv2.imread("mask.png")
-    points = peak_local_max(img, min_distance=5)
-    print(points)
+    img = img[:, :, 0]
+    points = convert_mask_to_points(img, up_factor=1)
+    plt.imshow(img)
+    plt.plot(points[:, 1], points[:, 0], "ro")
+    plt.savefig("test.png")
+    
