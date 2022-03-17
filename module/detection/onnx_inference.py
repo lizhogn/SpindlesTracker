@@ -119,7 +119,7 @@ class YoloxInference(object):
         else:
             self.model = model
         
-        self.session = onnxruntime.InferenceSession(self.model)
+        self.session = onnxruntime.InferenceSession(self.model, providers=['CUDAExecutionProvider'])
     
     def map_local_device(self):
         return "cuda" if torch.cuda.is_available() else "cpu"

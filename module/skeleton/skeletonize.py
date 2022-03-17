@@ -58,9 +58,11 @@ def skeletonize_spindle(img, det_info):
     skeleton_img = np.zeros(shape=(h, w), dtype=np.uint8)
     
     for idx, (bx, pt) in enumerate(zip(bboxes, points), start=1):
+        if len(pt[0]) == 0:
+            continue
         px1, py1 = pt[0]
         px2, py2 = pt[1]
-        x1, y1, x2, y2 = box_expand(bx, (h, w), padding=15)
+        x1, y1, x2, y2 = box_expand(bx, (h, w), padding=30)
         start = [py1-y1, px1-x1]
         end = [py2-y1, px2-x1]
         crop_cost_matrix = cost_matrix[y1:y2, x1:x2]

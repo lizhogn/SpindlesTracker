@@ -116,7 +116,8 @@ if __name__ == "__main__":
 
     # step1: Object Detection
     logger.info("Object Detection")
-    det_res = object_detection(imgs)
+    # det_res = object_detection(imgs)
+    det_res = json.load(open("demo_output/points_filt_det.json", "r"))
 
     # step2: Skeleton Extraction
     logger.info("Skeleton Extraction")

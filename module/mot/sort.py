@@ -290,6 +290,7 @@ def det_association(det_res):
     with open(os.path.join('/home/zhognli/SpindleTracker/module/mot/tmp', 'det.txt'),'w') as out_file:
         for frame in tqdm(range(len(det_res)), desc="progress of mot:"):
             dets = np.array(det_res[frame]["bboxes"])
+            pts = det_res[frame]["points"]
             frame_real = frame + 1
             total_frames += 1
             trackers = mot_tracker.update(dets)
@@ -297,8 +298,16 @@ def det_association(det_res):
                 print('%d,%d,%.2f,%.2f,%.2f,%.2f,1,-1,-1,-1'%(frame_real,d[4],d[0],d[1],d[2]-d[0],d[3]-d[1]), file=out_file)
                 instance_id = d[4]
                 if instance_id not in mot_res:
-                    mot_res[instance_id] = []
-                mot_res[int(d[4])].append([frame, d[0], d[1], d[2], d[3]])
+                    mot_res[instance_id] = {
+                      "bboxes": [],
+                      "points": []
+                    }
+                mot_res[int(d[4])]["bboxes"].append([frame, d[0], d[1], d[2], d[3]])
+                # find the box index in dets
+                delta = np.abs((dets - d[:4])).sum(axis=1)
+                # if delta.min() < 2:
+                row_index = np.argmin(delta)
+                mot_res[int(d[4])]["points"].append(pts[row_index])
     return mot_res
 
 if __name__ == '__main__':
