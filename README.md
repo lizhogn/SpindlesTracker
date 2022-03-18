@@ -1,0 +1,53 @@
+# SpindlesTracker
+
+SpindleTracker is a automatically pipline for spindles detection, tracking and analysis. 
+
+
+## 1. Visualization demo
+
+<img src="docs/assets/demo.gif" />
+
+## 2. Install
+```bash
+cd SpindleTracker
+pip install -r requirements.txt
+pip install -e .
+```
+
+## 3. Usage
+
+Demo file download: 
+
+### 1. Images Input Demo
+* step1: import the ONNX model from YOLOX-SP and put it into `module/detection/weight` path (default path).
+
+* step2: run the following:
+```bash
+python demo_img.py --images path/to/input/image --model path/to/onnx/model
+```
+The results is saved in the image path (detection, mask and skeleton as shown in following).
+
+<img src="docs/assets/image_pred.png" />
+
+
+### 3.2 TIF Input Demo
+* step1: import the ONNX model from YOLOX-SP and put it into `module/detection/weight` path (default path).
+
+* step2: run the following:
+```bash
+python demo_tif.py --images path/to/input/image --model path/to/onnx/model --save_path path/to/save
+```
+The results is saved in save path. NOTE that the tif need to be double channel (red and green). The other input tif need to change the image propressing file and retrain the YOLOX-SP model.
+
+
+## Cite SpindleTracker
+If you use SpindleTracker in your research, please cite our work by using the following BibTeX entry:
+
+```latex
+ @article{spindleTracker,
+  title={YOLOX: Exceeding YOLO Series in 2021},
+  author={Ge, Zheng and Liu, Songtao and Wang, Feng and Li, Zeming and Sun, Jian},
+  journal={arXiv preprint arXiv:2107.08430},
+  year={2021}
+}
+```

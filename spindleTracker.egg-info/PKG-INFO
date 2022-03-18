@@ -1,0 +1,43 @@
+Metadata-Version: 2.1
+Name: spindleTracker
+Version: 1.0
+Summary: UNKNOWN
+Home-page: UNKNOWN
+Author: lizhogn
+License: UNKNOWN
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.6
+
+# SpindlesTracker
+
+SpindleTracker is a automatically pipline for spindles detection, tracking and analysis. 
+
+
+## Visualization demo
+
+<img src="docs/assets/demo.gif" />
+
+## Install
+```bash
+pip install -r requirements.txt
+```
+
+## Usage
+
+### Images Input Demo
+
+
+### TIF Input Demo
+
+* step1: import the ONNX model from YOLOX-SP and put it into `module/detection/weight` path.
+
+* step2: run the code:
+```bash
+python demo_img.py --images path/to/input/image --model path/to/onnx/model
+```
+
+## License
+
+
