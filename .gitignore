@@ -1,5 +1,6 @@
 .obsidian/
 demo_output/
 dataset/
+*.onnx
 
 __pycache__/
