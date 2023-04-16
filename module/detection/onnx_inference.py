@@ -108,6 +108,28 @@ def demo_postprocess(outputs, img_size, p6=False):
 
     return outputs
 
+def draw_detection(img, bboxes, heatmap):
+    img = img.copy()
+    for i, box in enumerate(bboxes):
+        x1, y1, x2, y2 = [int(x) for x in box[:4]]
+        cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        cv2.putText(
+            img,
+            "{:.2f}".format(box[4]),
+            (x1, y1 - 10),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.5,
+            (0, 255, 0),
+            2,
+        )
+    # mixup the heatmap and img
+    # heatmap = cv2.resize(heatmap, (img.shape[1], img.shape[0]))
+    heatmap[heatmap<=60] = 0
+    heatmap = cv2.applyColorMap(np.uint8(255 * heatmap), cv2.COLORMAP_JET)
+    cam = 0.2 * np.float32(heatmap) + 0.8 * np.float32(img)
+    cam = cam / np.max(cam)
+    return np.uint8(255*cam)
+
 class YoloxInference(object):
     def __init__(self, model=None, input_shape=(640, 640), output_dir=None):
         self.input_shape = input_shape
@@ -124,9 +146,10 @@ class YoloxInference(object):
     def map_local_device(self):
         return "cuda" if torch.cuda.is_available() else "cpu"
     
-    def forward(self, origin_img):
+    def forward(self, origin_img, visualize=False):
         if isinstance(origin_img, str):
             origin_img = cv2.imread(origin_img)
+        img_h, img_w = origin_img.shape[:2]
         # model forward
         img, ratio = preprocess(origin_img, self.input_shape)
         ort_inputs = {self.session.get_inputs()[0].name: img[None, :, :, :]}
@@ -153,15 +176,20 @@ class YoloxInference(object):
         heatmap = (output[1].squeeze()*255).astype(np.uint8)
         origin_shape = (int(self.input_shape[0] / ratio), int(self.input_shape[1] / ratio))
         heatmap = cv2.resize(heatmap, origin_shape)
+        heatmap = heatmap[:img_h, :img_w]
 
+        # v
+        if visualize:
+            vis_img = draw_detection(origin_img, final_boxes, heatmap)
+            cv2.imwrite("demo/data/vis_img.png", vis_img)
+            print("save the img result to demo/data/vis_img.png")
         return final_boxes, heatmap
 
 if __name__ == '__main__':
-    img_path = "/home/zhognli/YOLOX/datasets/sample2/images/frame_000036.PNG"
+    img_path = "demo/data/img1.PNG"
 
     yolox_infer = YoloxInference(model="module/detection/weight/yolox.onnx")
-    dets, mask = yolox_infer.forward(img_path)
+    dets, mask = yolox_infer.forward(img_path, visualize=True)
     
-    # vis res
     print("done")
    

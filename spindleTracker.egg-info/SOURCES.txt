@@ -1,18 +1,8 @@
 .gitignore
 README.md
-demo_gt.py
-demo_pred.py
-output.png
 setup.py
-docs/paper.md
-docs/assets/YOLO-SP model.png
-exps/tracking/dt.txt
-exps/tracking/gt.txt
-exps/tracking/mot_benchmark.py
 module/detection/onnx_inference.py
 module/detection/utils.py
-module/detection/weight/yolox.onnx
-module/detection/weight/yolox_gpu.onnx
 module/mot/pt_sort.py
 module/mot/sort.py
 module/mot/villina_sort.py

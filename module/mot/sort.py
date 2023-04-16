@@ -287,7 +287,7 @@ def det_association(det_res):
     total_time = 0.0
     mot_tracker = Sort(max_age=5, min_hits=2, iou_threshold=0.5) # todo: change the iou rules
     mot_res = {}
-    with open(os.path.join('/home/zhognli/SpindleTracker/module/mot/tmp', 'det.txt'),'w') as out_file:
+    with open(os.path.join('./module/mot/tmp', 'det.txt'),'w') as out_file:
         for frame in tqdm(range(len(det_res)), desc="progress of mot:"):
             dets = np.array(det_res[frame]["bboxes"])
             pts = det_res[frame]["points"]

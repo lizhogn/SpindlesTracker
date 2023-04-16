@@ -54,7 +54,8 @@ from module.utils.bboxes import bboxes_filter
 def args_get():
     parser = argparse.ArgumentParser(description='Image/Images Prediction')
     parser.add_argument('--images', '-i', type=str,
-                        help='images(tif with green-red channel) path or image dir')
+                        default="demo/data/demo_video.tif",
+                        help='images(tif with green-red channel) path')
     parser.add_argument('--model', '-m', type=str,
                         default="module/detection/weight/yolox.onnx",
                         help='sum the integers (default: find the max)')
