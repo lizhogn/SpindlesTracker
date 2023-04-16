@@ -10,6 +10,7 @@ import numpy as np
 
 import onnxruntime
 import torch
+import requests
 
 def preprocess(img, input_size, swap=(2, 0, 1)):
     if len(img.shape) == 3:
@@ -137,16 +138,24 @@ class YoloxInference(object):
         self.score_thr = 0.3
         self.output_dir = output_dir
         if model is None:
-            self.model = "./module/detection/weight/yolox.onnx"
+            # download the model from huggingface
+            model_path = "module/detection/weight/yolox.onnx"
+            if not os.path.exists(model_path):
+                model_url = "https://huggingface.co/lizhogn/YOLOX-SP/resolve/main/yolox.onnx"
+                if not os.path.exists(os.path.dirname(model_path)):
+                    os.makedirs(os.path.dirname(model_path))
+                os.system("wget {} -O {}".format(model_url, model_path))
+            self.model = model_path
         else:
             self.model = model
         
-        self.session = onnxruntime.InferenceSession(self.model, providers=['CUDAExecutionProvider'])
+        # self.session = onnxruntime.InferenceSession(self.model, providers=['CUDAExecutionProvider'])
+        self.session = onnxruntime.InferenceSession(self.model)
     
     def map_local_device(self):
         return "cuda" if torch.cuda.is_available() else "cpu"
     
-    def forward(self, origin_img, visualize=False):
+    def forward(self, origin_img, conf_threshold=0.1, visualize=False):
         if isinstance(origin_img, str):
             origin_img = cv2.imread(origin_img)
         img_h, img_w = origin_img.shape[:2]
@@ -166,7 +175,7 @@ class YoloxInference(object):
         boxes_xyxy[:, 2] = boxes[:, 0] + boxes[:, 2]/2.
         boxes_xyxy[:, 3] = boxes[:, 1] + boxes[:, 3]/2.
         boxes_xyxy /= ratio
-        dets = multiclass_nms(boxes_xyxy, scores, nms_thr=0.45, score_thr=0.1)
+        dets = multiclass_nms(boxes_xyxy, scores, nms_thr=0.45, score_thr=conf_threshold)
         if dets is not None:
             final_boxes, final_cls_inds = dets[:, :5], dets[:, 5] 
         else:

@@ -13,3 +13,4 @@ skimage==0.0
 tifffile==2021.11.2
 torch==1.10.0+cu113
 tqdm==4.62.3
+gradio==3.27.0

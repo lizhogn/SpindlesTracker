@@ -3,5 +3,6 @@ demo_output/
 dataset/
 *.onnx
 demo/data/
+flagged/
 
 __pycache__/
