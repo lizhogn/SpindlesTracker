@@ -15,6 +15,8 @@ pip install -e .
 ```
 
 ## 3. Usage
+### Optimal: YOLOX-SP Training
+* Refer to our another repository: [lizhogn/YOLOX-SP](https://github.com/lizhogn/YOLOX-SP), you can train it on your own dataset.
 
 ### 1. Download the demo data and YOLOX-SP ONNX model
 * Demo file download: [Google Drive](https://drive.google.com/drive/folders/1C_d2gVMFe43_rwdn6I7tvl8x0cdXtRjb?usp=share_link)
