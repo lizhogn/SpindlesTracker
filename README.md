@@ -2,13 +2,17 @@
 
 SpindleTracker is a automatically pipline for spindles detection, tracking and analysis. 
 
+<img src="docs/assets/workflow.png" />
+
 
 ## 1. Visualization demo
 
 ### Tracking video
+
 <img src="docs/assets/demo.gif" />
 
 ### Skeletonize interface
+
 <img src="docs/assets/interface.png" />
 
 ## 2. Install
